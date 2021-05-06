@@ -201,11 +201,11 @@ else:
 @(SNIPPET(
     'builder_shell',
     script='\n'.join([
-        'if [ -d "$WORKSPACE/generated_documentation/api_rosdoc" ]; then',
+        'if [ -d "$WORKSPACE/generated_documentation/docs_output" ]; then',
         '  echo "# BEGIN SECTION: rsync API documentation to server"',
         '  cd $WORKSPACE/generated_documentation/api_rosdoc',
         '  for pkg_name in $(find . -maxdepth 1 -mindepth 1 -type d); do',
-        '    #rsync -e ssh --stats -r --delete $pkg_name %s@%s:%s' % \
+        '    rsync -e ssh --stats -r --delete $pkg_name %s@%s:%s' % \
           (upload_user, upload_host, os.path.join(upload_root, rosdistro_name, 'api')),
         '  done',
         '  echo "# END SECTION"',

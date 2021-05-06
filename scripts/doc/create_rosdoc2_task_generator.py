@@ -58,21 +58,13 @@ def main(argv=sys.argv[1:]):
     with Scope('SUBSECTION', 'packages'):
         # find packages in workspace
         source_space = os.path.join(args.workspace_root, 'src')
-        print("Crawling for packages in workspace '%s'" % source_space)
+        #print("Crawling for packages in workspace '%s'" % source_space)
         pkgs = find_packages(source_space)
 
         pkg_names = [pkg.name for pkg in pkgs.values()]
-        print('Found the following packages:')
-        for pkg_name in sorted(pkg_names):
-            print('  -', pkg_name)
-
-        maintainer_emails = set([])
-        for pkg in pkgs.values():
-            for m in pkg.maintainers:
-                maintainer_emails.add(m.email)
-        if maintainer_emails:
-            print('Package maintainer emails: %s' %
-                  ' '.join(sorted(maintainer_emails)))
+        #print('Found the following packages:')
+        #for pkg_name in sorted(pkg_names):
+        #    print('  -', pkg_name)
 
     print('Running generation of documentation')
     # generate Dockerfile

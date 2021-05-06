@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 
+from catkin_pkg.packages import find_packages
 from ros_buildfarm.workspace import clean_workspace
 from ros_buildfarm.workspace import ensure_workspace_exists
 
@@ -34,29 +35,44 @@ def main(argv=sys.argv[1:]):
         '--rosdoc2-dir',
         required=True,
         help='The root path of the rosdoc2 repository')
+    parser.add_argument(
+        'pkg_tuples',
+        nargs='*',
+        help='A list of package tuples in topological order, each containing '
+             'the name, and the relative path separated by a colon')
     args = parser.parse_args(argv)
 
     ensure_workspace_exists(args.workspace_root)
     clean_workspace(args.workspace_root)
 
-    print('Installing rosdoc2')
-    pip_rc = subprocess.call(['python3', '-m', 'pip', 'install', '--no-warn-script-location', '.'], cwd=args.rosdoc2_dir)
-    if pip_rc:
-        return pip_rc
+    with Scope('SUBSECTION', 'Installing rosdoc2'):
+        pip_rc = subprocess.call(['python3', '-m', 'pip', 'install', '--no-warn-script-location', '.'], cwd=args.rosdoc2_dir)
+        if pip_rc:
+            return pip_rc
 
-    print('Invoking rosdoc2')
-    env = {
-        **os.environ,
-    }
-    if 'PATH' not in env:
-        env['PATH'] = ''
-    else:
-        env['PATH'] += ':'
-    env['PATH'] += '/home/buildfarm/.local/bin'
+    with Scope('SUBSECTION', 'rosdoc2'):
+        env = {
+            **os.environ,
+        }
+        if 'PATH' not in env:
+            env['PATH'] = ''
+        else:
+            env['PATH'] += ':'
+        env['PATH'] += '/home/buildfarm/.local/bin'
 
-    rosdoc2_rc = subprocess.call(['rosdoc2', 'build', '--package-path', '/tmp/ws/src/rcutils'], cwd=args.workspace_root, env=env)
-    if rosdoc2_rc:
-        return rosdoc2_rc
+        source_space = os.path.join(args.workspace_root, 'src')
+        print("Crawling for packages in workspace '%s'" % (source_space))
+        pkgs = find_packages(source_space)
+
+        pkg_names = [pkg.name for pkg in pkgs.values()]
+        print('Found the following packages:')
+        for pkg_name in sorted(pkg_names):
+            print('  -', pkg_name)
+
+        # FIXME: what's with the hardcoded path?
+        rosdoc2_rc = subprocess.call(['rosdoc2', 'build', '--package-path', '/tmp/ws/src/rcutils'], cwd=args.workspace_root, env=env)
+        if rosdoc2_rc:
+            return rosdoc2_rc
 
     return 0
 
